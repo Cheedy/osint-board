@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ENTITY_DEFS, entityDef } from '../lib/entityTypes';
+import { ENTITY_DEFS } from '../lib/entityTypes';
+import { useDict } from '../i18n';
+import Rich from './Rich';
 import { analyze, normalizeValue } from '../lib/detect';
 import type { EntityKind } from '../types';
 
@@ -16,6 +18,7 @@ type Props = {
 };
 
 export default function QuickAdd({ screen, wire, anchorLabel, onCreate, onClose }: Props) {
+  const d = useDict();
   const [text, setText] = useState('');
   const [forced, setForced] = useState<EntityKind | null>(null);
   const [link, setLink] = useState(() => localStorage.getItem(LINK_PREF) === '1');
@@ -57,7 +60,7 @@ export default function QuickAdd({ screen, wire, anchorLabel, onCreate, onClose 
         ref={inputRef}
         className="quickadd-input"
         value={text}
-        placeholder="Colle une valeur ou un lien de profil…"
+        placeholder={d.quickadd.placeholder}
         onChange={(e) => {
           setText(e.target.value);
           setForced(null);
@@ -71,37 +74,39 @@ export default function QuickAdd({ screen, wire, anchorLabel, onCreate, onClose 
 
       <div className="quickadd-hint">
         {text ? (
-          <>
-            Détecté : <b>{found.fields.plateforme ?? entityDef(kind).name}</b>
-            {found.fields.handle ? ` · ${found.fields.handle}` : ''} — Entrée pour créer
-          </>
+          <Rich
+            text={d.quickadd.detected(
+              (found.fields.plateforme ?? d.entity[kind].name) +
+                (found.fields.handle ? ` · ${found.fields.handle}` : '')
+            )}
+          />
         ) : (
-          'Choisis un type, ou colle une valeur et je devine'
+          d.quickadd.hintEmpty
         )}
       </div>
 
       {wire ? (
-        <div className="quickadd-link is-on">→ sera relié à « {anchorLabel || 'l’élément d’origine'} »</div>
+        <div className="quickadd-link is-on">{d.quickadd.willLink(anchorLabel || d.quickadd.originItem)}</div>
       ) : (
         canLink && (
           <button className={`quickadd-link ${link ? 'is-on' : ''}`} onClick={toggleLink}>
-            <span className="box">{link ? '✓' : ''}</span> relier à « {anchorLabel} »
+            <span className="box">{link ? '✓' : ''}</span> {d.quickadd.linkTo(anchorLabel)}
           </button>
         )
       )}
 
       <div className="quickadd-grid">
-        {ENTITY_DEFS.map((d) => (
+        {ENTITY_DEFS.map((def) => (
           <button
-            key={d.kind}
-            className={`chip ${d.kind === kind ? 'is-active' : ''}`}
-            style={{ '--accent': d.color } as React.CSSProperties}
-            onClick={() => create(d.kind)}
-            onMouseEnter={() => setForced(d.kind)}
+            key={def.kind}
+            className={`chip ${def.kind === kind ? 'is-active' : ''}`}
+            style={{ '--accent': def.color } as React.CSSProperties}
+            onClick={() => create(def.kind)}
+            onMouseEnter={() => setForced(def.kind)}
             onMouseLeave={() => setForced(null)}
           >
-            <span>{d.icon}</span>
-            {d.short ?? d.name}
+            <span>{def.icon}</span>
+            {d.entity[def.kind].short || d.entity[def.kind].name}
           </button>
         ))}
       </div>

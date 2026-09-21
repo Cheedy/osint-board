@@ -1,5 +1,6 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
 import { confidenceColor } from '../lib/entityTypes';
+import { useDict } from '../i18n';
 import { useStore } from '../store';
 import type { OsintEdge } from '../types';
 
@@ -16,6 +17,7 @@ export default function RelationEdge({
   markerEnd,
 }: EdgeProps<OsintEdge>) {
   const select = useStore((s) => s.select);
+  const d = useDict();
   const [path, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -53,7 +55,7 @@ export default function RelationEdge({
             }}
           >
             {data?.label && <span className="edge-text">{data.label}</span>}
-            {data?.method && <span className="edge-method">via {data.method}</span>}
+            {data?.method && <span className="edge-method">{d.report.via(data.method)}</span>}
           </div>
         </EdgeLabelRenderer>
       )}

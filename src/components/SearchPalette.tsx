@@ -1,11 +1,13 @@
 import { useReactFlow } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { entityDef } from '../lib/entityTypes';
+import { useDict } from '../i18n';
 import { api } from '../lib/api';
 import { useStore } from '../store';
 import type { SearchHit } from '../types';
 
 export default function SearchPalette({ onClose }: { onClose: () => void }) {
+  const d = useDict();
   const nodes = useStore((s) => s.nodes);
   const board = useStore((s) => s.board);
   const select = useStore((s) => s.select);
@@ -61,7 +63,7 @@ export default function SearchPalette({ onClose }: { onClose: () => void }) {
         <input
           ref={inputRef}
           value={q}
-          placeholder="Chercher dans le plan (et dans les autres enquêtes)…"
+          placeholder={d.search.placeholder}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Escape') onClose();
@@ -71,16 +73,16 @@ export default function SearchPalette({ onClose }: { onClose: () => void }) {
 
         {q && (
           <div className="search-results">
-            {local.length > 0 && <div className="search-group">Dans cette enquête</div>}
+            {local.length > 0 && <div className="search-group">{d.search.here}</div>}
             {local.map((n) => (
               <button key={n.id} className="search-row" onClick={() => goTo(n.id)}>
                 <span>{entityDef(n.data.kind).icon}</span>
-                <b>{n.data.label || '(vide)'}</b>
-                <span className="search-kind">{entityDef(n.data.kind).name}</span>
+                <b>{n.data.label || d.common.empty}</b>
+                <span className="search-kind">{d.entity[n.data.kind].name}</span>
               </button>
             ))}
 
-            {others.length > 0 && <div className="search-group">Dans d’autres enquêtes</div>}
+            {others.length > 0 && <div className="search-group">{d.search.elsewhere}</div>}
             {others.map((h) => (
               <button
                 key={h.id}
@@ -96,7 +98,7 @@ export default function SearchPalette({ onClose }: { onClose: () => void }) {
               </button>
             ))}
 
-            {local.length === 0 && others.length === 0 && <div className="side-empty">Rien trouvé.</div>}
+            {local.length === 0 && others.length === 0 && <div className="side-empty">{d.search.nothing}</div>}
           </div>
         )}
       </div>

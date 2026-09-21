@@ -1,249 +1,264 @@
 <h1 align="center">osint-canvas</h1>
 
 <p align="center">
-  <b>Le plan de travail de vos enquêtes OSINT, en local.</b><br>
-  Posez ce que vous trouvez, reliez chaque trouvaille à la précédente,<br>
-  et gardez la trace de <i>comment</i> vous y êtes arrivé.
+  <b>The working board for your OSINT investigations, entirely local.</b><br>
+  Drop what you find, link each finding to the previous one,<br>
+  and keep a record of <i>how</i> you got there.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Node-%E2%89%A5%2024-5FA04E?logo=nodedotjs&logoColor=white" alt="Node ≥ 24">
-  <img src="https://img.shields.io/badge/donn%C3%A9es-100%25%20locales-2ea44f" alt="Données 100% locales">
-  <img src="https://img.shields.io/badge/z%C3%A9ro-appel%20r%C3%A9seau-blue" alt="Zéro appel réseau">
-  <img src="https://img.shields.io/badge/licence-MIT-lightgrey" alt="Licence MIT">
+  <b>English</b> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.pt.md">Português</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.de.md">Deutsch</a>
 </p>
 
 <p align="center">
-  <img src="docs/hero.png" alt="Une enquête ouverte dans osint-canvas : un nom au centre, et les trouvailles reliées autour" width="100%">
+  <img src="https://img.shields.io/badge/Node-%E2%89%A5%2024-5FA04E?logo=nodedotjs&logoColor=white" alt="Node >= 24">
+  <img src="https://img.shields.io/badge/data-100%25%20local-2ea44f" alt="100% local data">
+  <img src="https://img.shields.io/badge/zero-network%20calls-blue" alt="Zero network calls">
+  <img src="https://img.shields.io/badge/licence-MIT-lightgrey" alt="MIT licence">
+  <img src="https://img.shields.io/badge/languages-6-9b59b6" alt="6 languages">
 </p>
 
-> **In English —** osint-canvas is a local-first canvas for OSINT investigations: drop entities,
-> link them, and record *how* you moved from one finding to the next. It collects nothing by
-> itself and makes no network calls — you do the searching, it keeps the map. Everything lives in
-> a SQLite file on your machine. **The interface is currently in French only.**
+<p align="center">
+  <img src="docs/hero.png" alt="An investigation open in osint-canvas: a name in the middle, findings linked around it" width="100%">
+</p>
 
 ---
 
-## Le problème
+## The problem
 
-Une enquête OSINT, c'est une suite de petits sauts : un nom donne un pseudo, le pseudo donne un
-dépôt GitHub, le dépôt donne une adresse mail dans les commits. Trois jours plus tard, vous avez
-vingt onglets ouverts, un fichier texte en vrac, et vous ne savez plus **d'où sortait** cette
-adresse mail — donc vous ne savez plus si elle vaut quelque chose.
+An OSINT investigation is a series of small jumps: a name gives you a handle, the handle gives you
+a GitHub repository, the repository gives you an email address in the commits. Three days later
+you have twenty tabs open, a messy text file, and you no longer remember **where that email came
+from** — so you no longer know whether it is worth anything.
 
-osint-canvas garde la carte : chaque trouvaille est un élément, chaque flèche dit ce qui la relie
-à la précédente et par quel outil vous l'avez obtenue.
+osint-canvas keeps the map: every finding is an entity, and every arrow says what connects it to
+the previous one and which tool got you there.
 
-## Ce que ce n'est pas
+## What it is not
 
-- **Pas un collecteur.** Aucun scraping, aucune API, aucune requête sortante. L'outil ouvre les
-  sites OSINT dans votre navigateur avec la bonne valeur pré-remplie ; c'est vous qui cherchez.
-- **Pas un service.** Pas de compte, pas de cloud, pas de télémétrie.
-- **Pas une base de renseignement.** C'est un plan de travail : vous y mettez ce que vous
-  décidez d'y mettre.
+- **Not a collector.** No scraping, no API, no outbound requests. The app opens OSINT sites in
+  your browser with the right value pre-filled; you do the searching.
+- **Not a service.** No account, no cloud, no telemetry.
+- **Not an intelligence database.** It is a working board: you put in it what you decide to put in it.
 
-## Démarrer
+## Getting started
 
 ```bash
-git clone https://github.com/<votre-compte>/osint-canvas.git
-cd osint-canvas
+git clone https://github.com/Cheedy/osint-board.git
+cd osint-board
 npm install
 npm start
 ```
 
-L'application s'ouvre sur <http://localhost:5180>. Aucune dépendance native à compiler : la base
-est gérée par le module `node:sqlite` intégré à Node 24.
+The app opens at <http://localhost:5180>. No native dependency to compile: the database is handled
+by the `node:sqlite` module built into Node 24.
 
 ---
 
-## Comment on s'en sert
+## How you use it
 
-### 1. Poser un élément
+### 1. Drop an entity
 
-**Double-clic** n'importe où sur le plan, et tapez ou collez la valeur. Le type est deviné :
-email, téléphone, date de naissance, wallet, plaque, domaine… et les liens de profil sont
-reconnus par plateforme.
+**Double-click** anywhere on the board, then type or paste the value. The type is guessed: email,
+phone, date of birth, wallet, licence plate, domain… and profile links are recognised by platform.
 
-<p align="center"><img src="docs/creation.png" alt="Création rapide : un lien GitHub collé, détecté comme compte social" width="620"></p>
+<p align="center"><img src="docs/creation.png" alt="Quick add: a GitHub link pasted and detected as a social account" width="620"></p>
 
-### 2. Relier
+### 2. Link
 
-**Tirez un fil** depuis le bord d'un élément :
+**Pull a thread** from the edge of an entity:
 
-- vers un autre élément → ils sont reliés. Lâchez n'importe où sur la carte cible, pas besoin de
-  viser un point de 9 pixels ;
-- **dans le vide** → l'outil propose de créer l'élément suivant, déjà relié. C'est comme ça qu'on
-  déroule une piste sans jamais lâcher la souris.
+- onto another entity → they are linked. Drop anywhere on the target card, no need to aim at a
+  9-pixel dot;
+- **into empty space** → the app offers to create the next entity, **already linked**. That is how
+  you follow a lead without ever letting go of the mouse.
 
-### 3. Dire comment vous l'avez trouvé
+### 3. Say how you found it
 
-C'est le cœur de l'outil. Une flèche porte **ce qu'elle affirme**, **par quel moyen** vous l'avez
-établi, et une **source**. Trois mois plus tard, vous relisez votre propre raisonnement.
+This is the heart of the tool. An arrow carries **what it claims**, **by which means** you
+established it, and a **source**. Three months later, you can read your own reasoning again.
 
-<p align="center"><img src="docs/lien.png" alt="Le panneau d'un lien : ce qu'il dit, comment il a été trouvé, sa fiabilité" width="760"></p>
+<p align="center"><img src="docs/lien.png" alt="A link panel: what it says, how it was found, its confidence" width="760"></p>
 
-### 4. Le raccourci qui sert tout le temps
+### 4. The shortcut you will use all the time
 
-Sélectionnez l'élément d'où vient l'info, puis **`Ctrl+V`**.
+Select the entity the information came from, then press **`Ctrl+V`**.
 
-Vous trouvez le LinkedIn de votre cible ? Clic sur son nœud, copie de l'URL, `Ctrl+V` → un élément
-**LinkedIn · jean-dupont-92** apparaît à côté, **déjà relié**, avec l'URL gardée en source
-cliquable. Une trentaine de plateformes sont reconnues (LinkedIn, X, Instagram, Facebook, TikTok,
+Found your target's LinkedIn? Click their node, copy the profile URL, `Ctrl+V` → a
+**LinkedIn · john-doe-92** entity appears next to it, **already linked**, with the URL kept as a
+clickable source. About thirty platforms are recognised (LinkedIn, X, Instagram, Facebook, TikTok,
 Telegram, Reddit, GitHub, Twitch, Steam, Mastodon, Bluesky, Malt, Leboncoin…).
 
-Ça marche pareil avec un email, un numéro, **plusieurs lignes d'un coup** (un élément par ligne,
-tous reliés), ou une **capture d'écran** collée depuis le presse-papier.
+It works the same with an email, a phone number, **several lines at once** (one entity per line,
+all linked), or a **screenshot** pasted from the clipboard.
 
 ---
 
-## Ce qu'il y a dedans
+## What is inside
 
-### 17 types d'éléments
+### 17 entity types
 
-Personne · Date de naissance · Pseudo · Email · Téléphone · Compte social · Domaine / site ·
-IP / appareil · Photo / capture · Lieu / adresse · Organisation · Document · Véhicule ·
-Wallet crypto · Compte bancaire · Recherche effectuée · Note
+Person · Date of birth · Handle · Email · Phone · Social account · Domain / site · IP / device ·
+Photo / screenshot · Place / address · Organisation · Document · Vehicle · Crypto wallet ·
+Bank account · Search performed · Note
 
-Chaque type a ses propres champs, et vous pouvez toujours en ajouter un à la volée. Une date de
-naissance affiche l'âge du jour, calculé au vol.
+Each type has its own fields, and you can always add one on the fly. A date of birth shows the
+age as of today, computed on the spot.
 
-### ~75 outils OSINT, filtrés par contexte
+### ~75 OSINT tools, filtered by context
 
-Sélectionnez un élément : la colonne de droite ne montre que les outils qui s'appliquent à son
-type, et remplit la valeur pour vous. Moteurs et dorks, pseudos (WhatsMyName, Sherlock, Maigret),
-emails (Epieos, Holehe, HIBP, Hunter), téléphone, réseaux sociaux, recherche d'image inversée,
-domaines et infra (crt.sh, urlscan, Shodan, Censys), fuites, géo, et une section France
-(annuaire des entreprises, Pappers, BODACC, matchID, Geneanet…).
+Select an entity: the right column only shows the tools that apply to its type, and fills in the
+value for you. Search engines and dorks, handles (WhatsMyName, Sherlock, Maigret), email (Epieos,
+Holehe, HIBP, Hunter), phone, social networks, reverse image search, domains and infrastructure
+(crt.sh, urlscan, Shodan, Censys), leaks, geo, and a France section (company register, Pappers,
+BODACC, matchID, Geneanet…).
 
-Les outils en ligne de commande copient la commande prête à coller. `+ Outil` ajoute les vôtres :
-une URL avec `{{value}}` à l'endroit de la valeur. La case **tracer** dépose en plus un élément
-« Recherche » relié à chaque fois que vous ouvrez un outil — votre chemin reste sur le plan.
+Command-line tools copy the command ready to paste. `+ Tool` adds your own: a URL with
+`{{value}}` where the value goes. The **trace** checkbox also drops a linked “Search” entity every
+time you open a tool — your path stays on the board.
 
-<p align="center"><img src="docs/outils.png" alt="Le panneau d'un élément et les outils filtrés pour son type" width="760"></p>
+<p align="center"><img src="docs/outils.png" alt="An entity panel and the tools filtered for its type" width="760"></p>
 
-### Fiabilité
+### Confidence
 
-Chaque élément et chaque lien est **confirmé**, **probable** ou **à vérifier**, avec un code
-couleur. Les liens à vérifier sont en pointillés : on voit d'un coup d'œil ce qui tient et ce qui
-n'est qu'une hypothèse.
+Every entity and every link is **confirmed**, **likely** or **to verify**, with a colour code.
+Links to verify are dashed: you see at a glance what holds and what is only a hypothesis.
 
-### Doublons et recoupements
+### Duplicates and cross-checks
 
-Si une valeur existe déjà, l'outil le signale et propose de fusionner les deux éléments — et vous
-prévient quand elle apparaît dans une **autre enquête**. `Ctrl+F` cherche dans le plan courant et
-dans tous les autres.
+If a value already exists, the app says so and offers to merge the two entities — and it tells you
+when that value shows up in **another investigation**. `Ctrl+F` searches the current board and all
+the others.
 
-### Sauvegarde automatique et historique
+### Autosave and history
 
-Tout est enregistré une seconde après votre dernière action. Le plan se rouvre exactement comme
-vous l'aviez laissé : positions, zoom, sélection.
+Everything is saved one second after your last action. A board reopens exactly as you left it:
+positions, zoom, selection.
 
-En plus, chaque enquête garde une **frise de versions**. Un clic sur `16:19` restaure le plan tel
-qu'il était à ce moment — et l'état courant est photographié avant de basculer, donc une
-restauration ne perd jamais rien.
+On top of that, each investigation keeps a **version timeline**. Clicking `20:23` restores the
+board as it was at that moment — and the current state is captured first, so restoring never
+loses anything.
 
-<p align="center"><img src="docs/historique.png" alt="La liste des enquêtes et la frise des versions" width="300"></p>
+<p align="center"><img src="docs/historique.png" alt="The investigation list and the version timeline" width="300"></p>
 
-### Exporter
+### Export
 
-<img src="docs/rapport.png" alt="Le rapport imprimable généré depuis le plan" width="380" align="right">
+<img src="docs/rapport.png" alt="The printable report generated from the board" width="380" align="right">
 
-- **PNG** du plan, en haute résolution ;
-- **rapport imprimable** (PDF via `Ctrl+P`) : éléments groupés par type, liens avec leur méthode,
-  et la chronologie de la recherche ;
-- **rapport Markdown** ;
-- **sauvegarde JSON** réimportable, pour archiver ou passer l'enquête à quelqu'un.
+- **PNG** of the board, at high resolution;
+- **printable report** (PDF via `Ctrl+P`): entities grouped by type, links with their method, and
+  the timeline of the search;
+- **Markdown report**;
+- **JSON backup**, re-importable, to archive an investigation or hand it to someone else.
 
 <br clear="right">
 
-### Thème clair
+### Six languages
 
-<p align="center"><img src="docs/theme-clair.png" alt="Le même plan en thème clair" width="100%"></p>
+The interface speaks **English, French, Spanish, Portuguese, Italian and German** — including the
+17 entity types, their fields, the tool categories and the exported reports. The picker sits at
+the bottom of the left column; your browser language is used by default on first launch, and your
+choice is remembered afterwards.
+
+Your data is never translated: what you write stays as you wrote it.
+
+<p align="center"><img src="docs/langues.png" alt="The entity palette in English" width="290"></p>
+
+### Light theme
+
+<p align="center"><img src="docs/theme-clair.png" alt="The same board in the light theme" width="100%"></p>
 
 ---
 
-## Raccourcis
+## Shortcuts
 
-| Geste | Effet |
+| Gesture | Effect |
 |---|---|
-| Double-clic sur le plan | Créer un élément (type deviné, option « relier à ») |
-| Glisser un type depuis la droite | Créer un élément à cet endroit |
-| Tirer un fil depuis un élément | Relier, ou créer l'élément suivant déjà relié |
-| Double-clic sur le titre d'un élément | Renommer sur place |
-| `Ctrl+V` | Coller une trouvaille : typée, et reliée à la sélection |
-| `Ctrl+F` | Chercher ici **et** dans les autres enquêtes |
-| `Ctrl+Z` / `Ctrl+Y` | Annuler / rétablir |
-| `Ctrl+S` | Figer une version dans l'historique |
-| `Suppr` | Supprimer la sélection |
-| `Maj` + clic | Sélection multiple (2 éléments → Fusionner) |
-| `Échap` | Fermer le panneau ou la recherche |
+| Double-click on the board | Create an entity (type guessed, “link to” option) |
+| Drag a type from the right | Create an entity at that spot |
+| Pull a thread from an entity | Link, or create the next entity already linked |
+| Double-click an entity title | Rename in place |
+| `Ctrl+V` | Paste a finding: typed, and linked to the selection |
+| `Ctrl+F` | Search here **and** in the other investigations |
+| `Ctrl+Z` / `Ctrl+Y` | Undo / redo |
+| `Ctrl+S` | Pin a version in the history |
+| `Delete` | Delete the selection |
+| `Shift` + click | Multiple selection (2 entities → Merge) |
+| `Esc` | Close the panel or the search |
 
 ---
 
-## Où sont mes données
+## Where my data lives
 
 ```
-data/osint.db            enquêtes, liens, historique des versions
-data/attachments/<id>/   les captures collées, rangées par enquête
+data/osint.db            investigations, links, version history
+data/attachments/<id>/   pasted screenshots, filed per investigation
 ```
 
-Un fichier SQLite, rien d'autre. Copiez-le, sauvegardez-le, mettez-le sur une clé. `data/` est
-dans le `.gitignore` : vos enquêtes ne partiront jamais dans un commit par accident.
+One SQLite file, nothing else. Copy it, back it up, put it on a USB stick. `data/` is in
+`.gitignore`: your investigations can never end up in a commit by accident.
 
-Pour travailler sur une base séparée (démo, tests, cloisonnement d'une affaire) :
+To work on a separate database (demo, tests, compartmenting a case):
 
 ```bash
-OSINT_DATA_DIR=/chemin/vers/dossier npm run server
+OSINT_DATA_DIR=/path/to/folder npm run server
 ```
 
-> Pas de chiffrement au repos pour l'instant. Si vos enquêtes sont sensibles, posez `data/` sur un
-> volume chiffré (VeraCrypt, BitLocker, LUKS).
+> No encryption at rest for now. If your investigations are sensitive, put `data/` on an encrypted
+> volume (VeraCrypt, BitLocker, LUKS).
 
-## Cadre d'usage
+## Responsible use
 
-Cet outil sert à **organiser** de l'information que vous avez collectée par ailleurs. Il ne vous
-dispense de rien : la légalité de ce que vous faites dépend de ce que vous collectez, sur qui, et
-pourquoi.
+This tool is for **organising** information you collected elsewhere. It excuses nothing: whether
+what you do is lawful depends on what you collect, about whom, and why.
 
-En Europe, agréger des données publiques sur une personne physique reste un traitement de données
-personnelles au sens du RGPD — il vous faut une base légale, une finalité, et une durée de
-conservation. Journalisme, recherche académique, sécurité défensive, due diligence, test
-d'intrusion mandaté : très bien. Harcèlement, doxxing, surveillance d'un particulier : non, et
-ce n'est pas ce pour quoi ce dépôt existe.
+In Europe, aggregating public data about a natural person is still processing of personal data
+under the GDPR — you need a legal basis, a purpose, and a retention period. Journalism, academic
+research, defensive security, due diligence, an authorised penetration test: fine. Harassment,
+doxxing, surveilling a private individual: no, and that is not what this repository exists for.
 
-Les captures de cette page montrent une enquête fictive.
+The screenshots on this page show a fictional investigation.
 
-## Sous le capot
+## Under the hood
 
 | | |
 |---|---|
-| Interface | React 18 + TypeScript, [React Flow](https://reactflow.dev) pour le canvas, Zustand |
-| Serveur | Express, ~200 lignes, une API REST |
-| Base | `node:sqlite` (intégré à Node 24) — **aucune dépendance native** |
+| Interface | React 18 + TypeScript, [React Flow](https://reactflow.dev) for the canvas, Zustand |
+| Server | Express, ~200 lines, a REST API |
+| Database | `node:sqlite` (built into Node 24) — **no native dependency** |
 | Build | Vite |
 
 ```
-server/      API REST + schéma SQLite
-src/lib/     types d'éléments, catalogue d'outils, détection, export, mise en page
-src/         composants de l'interface et magasin d'état
+server/      REST API + SQLite schema
+src/i18n/    the six dictionaries
+src/lib/     entity types, tool catalogue, detection, export, layout
+src/         interface components and state store
 ```
 
-Le serveur sert aussi le `dist/` s'il existe (`npm run build`), pour tourner sur un seul port.
-L'architecture est prête à être empaquetée en application de bureau (Electron) sans réécriture.
+The server also serves `dist/` if it exists (`npm run build`), to run on a single port. The
+architecture is ready to be packaged as a desktop app (Electron) without a rewrite.
 
-## Limites connues
+## Known limits
 
-- Interface en français uniquement.
-- Les éléments ne se redimensionnent pas à la main.
-- Deux onglets ouverts sur la même enquête ne se synchronisent pas en direct.
-- Testé sur Windows avec Chrome ; devrait tourner partout où Node 24 tourne.
+- Entities cannot be resized by hand.
+- Two tabs open on the same investigation do not sync live.
+- Tested on Windows with Chrome; should run anywhere Node 24 runs.
 
-## Contribuer
+## Contributing
 
-Les issues et les PR sont les bienvenues — en particulier : de nouveaux outils dans
-`src/lib/tools.ts`, de nouvelles plateformes dans `src/lib/platforms.ts`, et une traduction de
-l'interface. Avant d'ouvrir une PR : `npx tsc --noEmit` doit passer.
+Issues and PRs are welcome — especially new tools in `src/lib/tools.ts`, new platforms in
+`src/lib/platforms.ts`, and new languages.
+
+**Adding a language**: copy `src/i18n/fr.ts`, translate it, and declare it in `src/i18n/langs.ts`
+and `src/i18n/current.ts`. The French dictionary is the reference type, so `npx tsc --noEmit`
+rejects a translation with a missing key — you cannot forget one. That command must pass before
+you open a PR.
 
 ## Licence
 
-MIT — voir [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).

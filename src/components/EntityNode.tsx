@@ -2,6 +2,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useEffect, useRef, useState } from 'react';
 import { confidenceColor, entityDef } from '../lib/entityTypes';
 import { ageFrom } from '../lib/dates';
+import { useDict } from '../i18n';
 import { useStore } from '../store';
 import type { OsintNode } from '../types';
 
@@ -13,7 +14,9 @@ const SIDES = [
 ];
 
 export default function EntityNode({ id, data, selected }: NodeProps<OsintNode>) {
+  const d = useDict();
   const def = entityDef(data.kind);
+  const labels = d.entity[data.kind] ?? d.entity.note;
   const updateNode = useStore((s) => s.updateNode);
   const checkDuplicate = useStore((s) => s.checkDuplicate);
   const [editing, setEditing] = useState(!data.label);
@@ -44,6 +47,7 @@ export default function EntityNode({ id, data, selected }: NodeProps<OsintNode>)
   const platform = String(data.fields?.plateforme ?? '').trim();
   /* Une date de naissance affiche l'age du jour, calcule au vol (rien n'est stocke). */
   const age = data.kind === 'birth' ? ageFrom(data.label) : null;
+  const fieldLabel = (key: string) => (labels.fields as Record<string, string>)[key] ?? key;
   const shown = Object.entries(data.fields ?? {})
     .filter(([k, v]) => {
       if (!v || !String(v).trim()) return false;
@@ -68,9 +72,9 @@ export default function EntityNode({ id, data, selected }: NodeProps<OsintNode>)
       ))}
 
       <div className="node-head">
-        <span className="node-dot" title={data.confidence} />
+        <span className="node-dot" title={d.confidence[data.confidence]} />
         <span className="node-icon">{def.icon}</span>
-        <span className="node-kind">{platform || def.name}</span>
+        <span className="node-kind">{platform || labels.name}</span>
         {data.source && (
           <a
             className="node-src"
@@ -94,7 +98,7 @@ export default function EntityNode({ id, data, selected }: NodeProps<OsintNode>)
           ref={inputRef}
           className="node-input nodrag"
           value={draft}
-          placeholder={def.placeholder}
+          placeholder={labels.placeholder}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => {
@@ -107,8 +111,8 @@ export default function EntityNode({ id, data, selected }: NodeProps<OsintNode>)
           }}
         />
       ) : (
-        <div className="node-label" onDoubleClick={() => setEditing(true)} title="Double-clic pour éditer">
-          {data.label || <span className="node-empty">{def.placeholder}</span>}
+        <div className="node-label" onDoubleClick={() => setEditing(true)} title={d.node.editHint}>
+          {data.label || <span className="node-empty">{labels.placeholder}</span>}
         </div>
       )}
 
@@ -116,13 +120,13 @@ export default function EntityNode({ id, data, selected }: NodeProps<OsintNode>)
         <div className="node-fields">
           {age !== null && (
             <div className="node-field">
-              <span>Âge aujourd’hui</span>
-              <b>{age} ans</b>
+              <span>{d.node.ageToday}</span>
+              <b>{d.node.years(age)}</b>
             </div>
           )}
           {shown.map(([k, v]) => (
             <div key={k} className="node-field">
-              <span>{def.fields.find((f) => f.key === k)?.label ?? k}</span>
+              <span>{fieldLabel(k)}</span>
               <b>{String(v)}</b>
             </div>
           ))}

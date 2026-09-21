@@ -3,10 +3,12 @@ import { useRef, useState } from 'react';
 import { autoLayout } from '../lib/layout';
 import { entityDef } from '../lib/entityTypes';
 import { exportJson, exportMarkdown, exportPdf, exportPng, parseImport } from '../lib/exporters';
+import { useDict } from '../i18n';
 import { useStore } from '../store';
 import { timeAgo } from '../lib/format';
 
 export default function Toolbar({ onSearch }: { onSearch: () => void }) {
+  const d = useDict();
   const board = useStore((s) => s.board);
   const nodes = useStore((s) => s.nodes);
   const edges = useStore((s) => s.edges);
@@ -34,14 +36,14 @@ export default function Toolbar({ onSearch }: { onSearch: () => void }) {
 
   const statusText =
     status === 'saving'
-      ? 'Enregistrement…'
+      ? d.toolbar.saving
       : status === 'dirty'
-        ? 'Modifié'
+        ? d.toolbar.dirty
         : status === 'error'
-          ? 'Erreur de sauvegarde'
+          ? d.toolbar.saveError
           : lastSavedAt
-            ? `Enregistré ${timeAgo(lastSavedAt)}`
-            : 'Prêt';
+            ? d.toolbar.savedAt(timeAgo(lastSavedAt))
+            : d.toolbar.ready;
 
   /** Range en arbre gauche→droite et realigne les ancrages pour que ça se lise d'un trait. */
   const arrange = () => {
@@ -57,9 +59,9 @@ export default function Toolbar({ onSearch }: { onSearch: () => void }) {
       const { nodes: n, edges: e } = parseImport(await file.text());
       importState(n, e);
       setTimeout(() => rf.fitView({ padding: 0.15, duration: 400 }), 80);
-      notify(`${n.length} éléments importés`);
+      notify(d.toolbar.imported(n.length));
     } catch {
-      notify('Fichier JSON illisible');
+      notify(d.toolbar.importError);
     }
   };
 
@@ -70,65 +72,96 @@ export default function Toolbar({ onSearch }: { onSearch: () => void }) {
           className="title-input"
           value={board.title}
           onChange={(e) => patchBoard({ title: e.target.value })}
-          placeholder="Nom de l’enquête"
+          placeholder={d.toolbar.titlePlaceholder}
         />
         <input
           className="target-input"
           value={board.target}
           onChange={(e) => patchBoard({ target: e.target.value })}
-          placeholder="Cible principale…"
+          placeholder={d.toolbar.targetPlaceholder}
         />
       </div>
 
-      <div className={`save-status is-${status}`} title="Sauvegarde automatique dans SQLite">
+      <div className={`save-status is-${status}`} title={d.toolbar.saveTitle}>
         <span className="dot" />
         {statusText}
       </div>
 
       <div className="toolbar-actions">
-        <button className="btn btn-ghost" onClick={undo} disabled={!past.length} title="Annuler (Ctrl+Z)">
+        <button className="btn btn-ghost" onClick={undo} disabled={!past.length} title={d.toolbar.undo}>
           ↶
         </button>
-        <button className="btn btn-ghost" onClick={redo} disabled={!future.length} title="Rétablir (Ctrl+Y)">
+        <button className="btn btn-ghost" onClick={redo} disabled={!future.length} title={d.toolbar.redo}>
           ↷
         </button>
         <span className="sep" />
-        <button className="btn btn-ghost" onClick={onSearch} title="Rechercher (Ctrl+F)">
-          🔍 Chercher
+        <button className="btn btn-ghost" onClick={onSearch} title={d.toolbar.searchTitle}>
+          🔍 {d.toolbar.search}
         </button>
-        <button className="btn btn-ghost" onClick={arrange} title="Réorganiser le plan en arbre">
-          ✨ Ranger
+        <button className="btn btn-ghost" onClick={arrange} title={d.toolbar.arrangeTitle}>
+          ✨ {d.toolbar.arrange}
         </button>
-        <button className="btn btn-ghost" onClick={() => rf.fitView({ padding: 0.15, duration: 400 })} title="Tout voir">
-          ⤢ Ajuster
+        <button
+          className="btn btn-ghost"
+          onClick={() => rf.fitView({ padding: 0.15, duration: 400 })}
+          title={d.toolbar.fitTitle}
+        >
+          ⤢ {d.toolbar.fit}
         </button>
         {picked.length === 2 && (
           <button className="btn btn-accent" onClick={() => setMergeAsk(true)}>
-            ⧉ Fusionner
+            ⧉ {d.toolbar.merge}
           </button>
         )}
         <span className="sep" />
         <div className="menu-wrap">
           <button className="btn btn-ghost" onClick={() => setMenu((v) => !v)}>
-            ⇧ Exporter
+            ⇧ {d.toolbar.export}
           </button>
           {menu && (
             <>
               <div className="menu-backdrop" onClick={() => setMenu(false)} />
               <div className="menu menu-right">
-                <button onClick={() => { setMenu(false); void exportPng(board, nodes, theme === 'dark', rf.getNodesBounds(nodes)); }}>
-                  Image PNG du plan
+                <button
+                  onClick={() => {
+                    setMenu(false);
+                    void exportPng(board, nodes, theme === 'dark', rf.getNodesBounds(nodes));
+                  }}
+                >
+                  {d.toolbar.exportPng}
                 </button>
-                <button onClick={() => { setMenu(false); exportPdf(board, nodes, edges); }}>
-                  Rapport imprimable (PDF)
+                <button
+                  onClick={() => {
+                    setMenu(false);
+                    exportPdf(board, nodes, edges);
+                  }}
+                >
+                  {d.toolbar.exportPdf}
                 </button>
-                <button onClick={() => { setMenu(false); exportMarkdown(board, nodes, edges); }}>
-                  Rapport Markdown
+                <button
+                  onClick={() => {
+                    setMenu(false);
+                    exportMarkdown(board, nodes, edges);
+                  }}
+                >
+                  {d.toolbar.exportMd}
                 </button>
-                <button onClick={() => { setMenu(false); exportJson(board, nodes, edges); }}>
-                  Sauvegarde JSON
+                <button
+                  onClick={() => {
+                    setMenu(false);
+                    exportJson(board, nodes, edges);
+                  }}
+                >
+                  {d.toolbar.exportJson}
                 </button>
-                <button onClick={() => { setMenu(false); fileRef.current?.click(); }}>Importer un JSON…</button>
+                <button
+                  onClick={() => {
+                    setMenu(false);
+                    fileRef.current?.click();
+                  }}
+                >
+                  {d.toolbar.importJson}
+                </button>
               </div>
             </>
           )}
@@ -136,7 +169,7 @@ export default function Toolbar({ onSearch }: { onSearch: () => void }) {
         <button
           className="btn btn-ghost"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          title="Changer de thème"
+          title={d.toolbar.themeTitle}
         >
           {theme === 'dark' ? '☀' : '☾'}
         </button>
@@ -153,8 +186,8 @@ export default function Toolbar({ onSearch }: { onSearch: () => void }) {
       {mergeAsk && picked.length === 2 && (
         <div className="modal-backdrop" onClick={() => setMergeAsk(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Fusionner deux nœuds</h3>
-            <p className="modal-sub">Lequel gardes-tu ? L’autre lui cède ses champs et ses liens.</p>
+            <h3>{d.merge.title}</h3>
+            <p className="modal-sub">{d.merge.sub}</p>
             <div className="modal-choices">
               {picked.map((n, i) => (
                 <button
@@ -166,14 +199,14 @@ export default function Toolbar({ onSearch }: { onSearch: () => void }) {
                   }}
                 >
                   <b>
-                    {entityDef(n.data.kind).icon} {n.data.label || '(vide)'}
+                    {entityDef(n.data.kind).icon} {n.data.label || d.common.empty}
                   </b>
-                  <span>{entityDef(n.data.kind).name}</span>
+                  <span>{d.entity[n.data.kind].name}</span>
                 </button>
               ))}
             </div>
             <button className="btn btn-ghost" onClick={() => setMergeAsk(false)}>
-              Annuler
+              {d.common.cancel}
             </button>
           </div>
         </div>

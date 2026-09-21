@@ -12,6 +12,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import EntityNode from './EntityNode';
 import RelationEdge from './RelationEdge';
 import QuickAdd from './QuickAdd';
+import Rich from './Rich';
+import { useDict } from '../i18n';
 import { entityDef } from '../lib/entityTypes';
 import { analyze } from '../lib/detect';
 import { api } from '../lib/api';
@@ -41,6 +43,7 @@ export default function Board() {
   const checkDuplicate = useStore((s) => s.checkDuplicate);
   const notify = useStore((s) => s.notify);
 
+  const d = useDict();
   const rf = useReactFlow();
   const wrapper = useRef<HTMLDivElement>(null);
   const [quick, setQuick] = useState<{
@@ -123,18 +126,18 @@ export default function Board() {
           const up = await api.upload(board.id, dataUrl, file.name || 'capture.png');
           const state = useStore.getState();
           const anchor = state.nodes.find((n) => n.id === state.selectedNodeId) ?? null;
-          const id = addNode('photo', anchor ? placeNear(anchor) : centerOfCanvas(), 'Capture', {
+          const id = addNode('photo', anchor ? placeNear(anchor) : centerOfCanvas(), d.entity.photo.name, {
             attachment: up.url,
           });
           if (anchor) {
             onConnect({ source: anchor.id, target: id, sourceHandle: 'right', targetHandle: 'left' });
             select(anchor.id, null);
-            notify(`Capture ajoutée et reliée à « ${anchor.data.label || 'l’élément sélectionné'} »`);
+            notify(d.canvas.captureLinked(anchor.data.label || d.common.selectedItem));
           } else {
-            notify('Capture ajoutée au plan');
+            notify(d.canvas.captureAdded);
           }
         } catch {
-          notify('Impossible d’enregistrer la capture');
+          notify(d.canvas.captureError);
         }
         return;
       }
@@ -150,23 +153,21 @@ export default function Board() {
       if (lines.length > 1 && lines.length <= 25) {
         lines.forEach((line, i) => addFinding(line, { link: true, offset: i }));
         notify(
-          anchorLabel
-            ? `${lines.length} éléments ajoutés et reliés à « ${anchorLabel} »`
-            : `${lines.length} éléments ajoutés`
+          anchorLabel ? d.canvas.pastedMany(lines.length, anchorLabel) : d.canvas.pastedManyFree(lines.length)
         );
         return;
       }
 
       const { id, found, anchor } = addFinding(text, { link: true });
       if (anchor) {
-        const what = found.fields.plateforme ? `${found.fields.plateforme}` : entityDef(found.kind).name;
-        notify(`${what} relié à « ${anchor.data.label || 'l’élément sélectionné'} »`);
+        const what = found.fields.plateforme ? String(found.fields.plateforme) : d.entity[found.kind].name;
+        notify(d.canvas.pastedOne(what, anchor.data.label || d.common.selectedItem));
       }
       void checkDuplicate(id);
     };
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);
-  }, [board, addNode, addFinding, placeNear, centerOfCanvas, checkDuplicate, notify, onConnect, select]);
+  }, [board, d, addNode, addFinding, placeNear, centerOfCanvas, checkDuplicate, notify, onConnect, select]);
 
   const onDoubleClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -291,10 +292,9 @@ export default function Board() {
 
       {nodes.length === 0 && (
         <div className="canvas-empty">
-          <h2>Plan vide</h2>
+          <h2>{d.canvas.emptyTitle}</h2>
           <p>
-            <b>Double-clic</b> n’importe où pour créer un élément · <b>Ctrl+V</b> pour coller une valeur, un lien de
-            profil ou une capture · ou glisse un type depuis la palette de droite.
+            <Rich text={d.canvas.emptyHint} />
           </p>
         </div>
       )}

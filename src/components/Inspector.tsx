@@ -3,27 +3,12 @@ import { useRef, useState } from 'react';
 import { CONFIDENCE, ENTITY_DEFS, entityDef } from '../lib/entityTypes';
 import { api } from '../lib/api';
 import { KNOWN_PLATFORMS } from '../lib/platforms';
+import { useDict } from '../i18n';
 import { useStore } from '../store';
 import type { Confidence, EntityKind } from '../types';
 
-const METHODS = [
-  'Recherche Google',
-  'Dork Google',
-  'Holehe',
-  'Epieos',
-  'Sherlock',
-  'WhatsMyName',
-  'Whois',
-  'Recherche d’image inversée',
-  'Profil public',
-  'Recoupement manuel',
-  'Capture d’écran',
-  'Fuite de données',
-  'Annuaire',
-  'Registre public',
-];
-
 export default function Inspector() {
+  const d = useDict();
   const nodes = useStore((s) => s.nodes);
   const edges = useStore((s) => s.edges);
   const selectedNodeId = useStore((s) => s.selectedNodeId);
@@ -54,57 +39,57 @@ export default function Inspector() {
     return (
       <aside className="inspector">
         <div className="insp-head">
-          <h2>Lien</h2>
-          <button className="icon-btn" onClick={() => select(null, null)} title="Fermer">
+          <h2>{d.inspector.linkTitle}</h2>
+          <button className="icon-btn" onClick={() => select(null, null)} title={d.common.close}>
             ×
           </button>
         </div>
 
         <div className="insp-link">
           <button className="link-end" onClick={() => select(edge.source, null)}>
-            {entityDef(from?.data.kind ?? 'note').icon} {from?.data.label || '(vide)'}
+            {entityDef(from?.data.kind ?? 'note').icon} {from?.data.label || d.common.empty}
           </button>
           <span className="link-arrow">↓</span>
           <button className="link-end" onClick={() => select(edge.target, null)}>
-            {entityDef(to?.data.kind ?? 'note').icon} {to?.data.label || '(vide)'}
+            {entityDef(to?.data.kind ?? 'note').icon} {to?.data.label || d.common.empty}
           </button>
         </div>
 
         <label className="field">
-          <span>Ce que dit le lien</span>
+          <span>{d.inspector.linkSays}</span>
           <input
             value={edge.data?.label ?? ''}
-            placeholder="même pseudo, même photo de profil…"
+            placeholder={d.inspector.linkSaysPlaceholder}
             onChange={(e) => updateEdge(edge.id, { label: e.target.value })}
           />
         </label>
 
         <label className="field">
-          <span>Comment tu l’as trouvé</span>
+          <span>{d.inspector.linkHow}</span>
           <input
             list="methods"
             value={edge.data?.method ?? ''}
-            placeholder="Holehe, dork Google, recoupement…"
+            placeholder={d.inspector.linkHowPlaceholder}
             onChange={(e) => updateEdge(edge.id, { method: e.target.value })}
           />
           <datalist id="methods">
-            {METHODS.map((m) => (
+            {d.methods.map((m) => (
               <option key={m} value={m} />
             ))}
           </datalist>
         </label>
 
         <label className="field">
-          <span>Source (URL ou référence)</span>
+          <span>{d.inspector.linkSource}</span>
           <input
             value={edge.data?.sourceUrl ?? ''}
-            placeholder="https://…"
+            placeholder={d.inspector.linkSourcePlaceholder}
             onChange={(e) => updateEdge(edge.id, { sourceUrl: e.target.value })}
           />
         </label>
 
         <div className="field">
-          <span>Fiabilité</span>
+          <span>{d.inspector.confidence}</span>
           <div className="conf-row">
             {CONFIDENCE.map((c) => (
               <button
@@ -113,7 +98,7 @@ export default function Inspector() {
                 style={{ '--c': c.color } as React.CSSProperties}
                 onClick={() => updateEdge(edge.id, { confidence: c.value })}
               >
-                {c.label}
+                {d.confidence[c.value]}
               </button>
             ))}
           </div>
@@ -121,10 +106,10 @@ export default function Inspector() {
 
         <div className="insp-actions">
           <button className="btn btn-ghost" onClick={() => flipEdge(edge.id)}>
-            ↕ Inverser le sens
+            {d.inspector.flip}
           </button>
           <button className="btn btn-danger" onClick={() => deleteEdge(edge.id)}>
-            Supprimer le lien
+            {d.inspector.deleteLink}
           </button>
         </div>
       </aside>
@@ -133,8 +118,11 @@ export default function Inspector() {
 
   /* ----------------------------------------------------------------- noeud */
   const def = entityDef(node!.data.kind);
+  const labels = d.entity[node!.data.kind] ?? d.entity.note;
+  const fieldLabels = labels.fields as Record<string, string>;
+  const placeholders = labels.ph as Record<string, string>;
   const data = node!.data;
-  const custom = Object.keys(data.fields ?? {}).filter((k) => !def.fields.some((f) => f.key === k));
+  const custom = Object.keys(data.fields ?? {}).filter((k) => !def.fields.includes(k));
   const links = edges.filter((e) => e.source === node!.id || e.target === node!.id);
 
   const upload = async (file: File) => {
@@ -148,7 +136,7 @@ export default function Inspector() {
       const up = await api.upload(board.id, dataUrl, file.name);
       updateNode(node!.id, { attachment: up.url });
     } catch {
-      notify('Envoi du fichier impossible');
+      notify(d.inspector.uploadError);
     }
   };
 
@@ -156,25 +144,25 @@ export default function Inspector() {
     <aside className="inspector">
       <div className="insp-head">
         <h2>
-          {def.icon} {String(data.fields?.plateforme ?? '').trim() || def.name}
+          {def.icon} {String(data.fields?.plateforme ?? '').trim() || labels.name}
         </h2>
-        <button className="icon-btn" onClick={() => select(null, null)} title="Fermer (Échap)">
+        <button className="icon-btn" onClick={() => select(null, null)} title={d.common.closeEsc}>
           ×
         </button>
       </div>
 
       <label className="field">
-        <span>{def.valueLabel}</span>
+        <span>{labels.value}</span>
         <input
           value={data.label}
-          placeholder={def.placeholder}
+          placeholder={labels.placeholder}
           onChange={(e) => updateNode(node!.id, { label: e.target.value })}
           onBlur={() => data.label.trim() && void checkDuplicate(node!.id)}
         />
       </label>
 
       <div className="field">
-        <span>Fiabilité</span>
+        <span>{d.inspector.confidence}</span>
         <div className="conf-row">
           {CONFIDENCE.map((c) => (
             <button
@@ -183,21 +171,21 @@ export default function Inspector() {
               style={{ '--c': c.color } as React.CSSProperties}
               onClick={() => updateNode(node!.id, { confidence: c.value as Confidence })}
             >
-              {c.label}
+              {d.confidence[c.value]}
             </button>
           ))}
         </div>
       </div>
 
       <div className="insp-fields">
-        {def.fields.map((f) => (
-          <label className="field" key={f.key}>
-            <span>{f.label}</span>
+        {def.fields.map((key) => (
+          <label className="field" key={key}>
+            <span>{fieldLabels[key] ?? key}</span>
             <input
-              value={data.fields?.[f.key] ?? ''}
-              placeholder={f.placeholder ?? ''}
-              list={f.key === 'plateforme' ? 'platforms' : undefined}
-              onChange={(e) => setNodeField(node!.id, f.key, e.target.value)}
+              value={data.fields?.[key] ?? ''}
+              placeholder={placeholders[key] ?? ''}
+              list={key === 'plateforme' ? 'platforms' : undefined}
+              onChange={(e) => setNodeField(node!.id, key, e.target.value)}
             />
           </label>
         ))}
@@ -210,7 +198,11 @@ export default function Inspector() {
           <label className="field" key={k}>
             <span>
               {k}
-              <button className="field-del" onClick={() => removeNodeField(node!.id, k)} title="Retirer ce champ">
+              <button
+                className="field-del"
+                onClick={() => removeNodeField(node!.id, k)}
+                title={d.inspector.removeField}
+              >
                 ×
               </button>
             </span>
@@ -228,41 +220,41 @@ export default function Inspector() {
           setNewField('');
         }}
       >
-        <input placeholder="+ ajouter un champ" value={newField} onChange={(e) => setNewField(e.target.value)} />
+        <input placeholder={d.inspector.addField} value={newField} onChange={(e) => setNewField(e.target.value)} />
       </form>
 
       <label className="field">
-        <span>Source de l’info</span>
+        <span>{d.inspector.source}</span>
         <input
           value={data.source}
-          placeholder="https://… ou « capture Insta du 12/03 »"
+          placeholder={d.inspector.sourcePlaceholder}
           onChange={(e) => updateNode(node!.id, { source: e.target.value })}
         />
       </label>
 
       <label className="field">
-        <span>Note</span>
+        <span>{d.inspector.note}</span>
         <textarea
           rows={3}
           value={data.note}
-          placeholder="Ce que tu retiens, les doutes, la prochaine étape…"
+          placeholder={d.inspector.notePlaceholder}
           onChange={(e) => updateNode(node!.id, { note: e.target.value })}
         />
       </label>
 
       <div className="field">
-        <span>Pièce jointe</span>
+        <span>{d.inspector.attachment}</span>
         {data.attachment ? (
           <div className="insp-attach">
             <img src={data.attachment} alt="" />
             <button className="btn btn-ghost btn-sm" onClick={() => updateNode(node!.id, { attachment: '' })}>
-              Retirer
+              {d.common.remove}
             </button>
           </div>
         ) : (
           <>
             <button className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}>
-              Choisir un fichier…
+              {d.inspector.pickFile}
             </button>
             <input
               ref={fileRef}
@@ -276,14 +268,11 @@ export default function Inspector() {
       </div>
 
       <div className="field">
-        <span>Changer de type</span>
-        <select
-          value={data.kind}
-          onChange={(e) => updateNode(node!.id, { kind: e.target.value as EntityKind })}
-        >
-          {ENTITY_DEFS.map((d) => (
-            <option key={d.kind} value={d.kind}>
-              {d.icon} {d.name}
+        <span>{d.inspector.changeKind}</span>
+        <select value={data.kind} onChange={(e) => updateNode(node!.id, { kind: e.target.value as EntityKind })}>
+          {ENTITY_DEFS.map((entity) => (
+            <option key={entity.kind} value={entity.kind}>
+              {entity.icon} {d.entity[entity.kind].name}
             </option>
           ))}
         </select>
@@ -291,7 +280,7 @@ export default function Inspector() {
 
       {links.length > 0 && (
         <div className="insp-links">
-          <span className="field-label">Connexions ({links.length})</span>
+          <span className="field-label">{d.inspector.connections(links.length)}</span>
           {links.map((e) => {
             const other = nodes.find((n) => n.id === (e.source === node!.id ? e.target : e.source));
             const outgoing = e.source === node!.id;
@@ -299,7 +288,7 @@ export default function Inspector() {
               <button key={e.id} className="insp-link-row" onClick={() => select(null, e.id)}>
                 <span className="dir">{outgoing ? '→' : '←'}</span>
                 <span className="who">
-                  {entityDef(other?.data.kind ?? 'note').icon} {other?.data.label || '(vide)'}
+                  {entityDef(other?.data.kind ?? 'note').icon} {other?.data.label || d.common.empty}
                 </span>
                 {e.data?.label && <span className="what">{e.data.label}</span>}
               </button>
@@ -313,10 +302,10 @@ export default function Inspector() {
           className="btn btn-ghost"
           onClick={() => rf.setCenter(node!.position.x + 110, node!.position.y + 50, { zoom: 1.2, duration: 400 })}
         >
-          Centrer
+          {d.inspector.center}
         </button>
         <button className="btn btn-danger" onClick={() => deleteNode(node!.id)}>
-          Supprimer
+          {d.common.delete}
         </button>
       </div>
     </aside>

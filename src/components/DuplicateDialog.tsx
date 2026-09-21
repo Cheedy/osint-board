@@ -1,8 +1,10 @@
 import { useReactFlow } from '@xyflow/react';
 import { entityDef } from '../lib/entityTypes';
+import { useDict } from '../i18n';
 import { useStore } from '../store';
 
 export default function DuplicateDialog() {
+  const d = useDict();
   const dup = useStore((s) => s.duplicate);
   const dismiss = useStore((s) => s.dismissDuplicate);
   const mergeNodes = useStore((s) => s.mergeNodes);
@@ -17,15 +19,11 @@ export default function DuplicateDialog() {
   return (
     <div className="modal-backdrop" onClick={dismiss}>
       <div className="modal modal-dup" onClick={(e) => e.stopPropagation()}>
-        <h3>
-          ⚠ « {node.data.label} » existe déjà
-        </h3>
+        <h3>{d.duplicate.title(node.data.label)}</h3>
 
         {sameBoard.length > 0 ? (
           <>
-            <p className="modal-sub">
-              Déjà présent {sameBoard.length} fois dans cette enquête. Tu veux en faire quoi ?
-            </p>
+            <p className="modal-sub">{d.duplicate.sub(sameBoard.length)}</p>
             <div className="dup-list">
               {sameBoard.map((h) => (
                 <div key={h.id} className="dup-row">
@@ -42,10 +40,10 @@ export default function DuplicateDialog() {
                         dismiss();
                       }}
                     >
-                      Voir
+                      {d.duplicate.view}
                     </button>
                     <button className="btn btn-accent btn-sm" onClick={() => mergeNodes(h.id, node.id)}>
-                      Fusionner dedans
+                      {d.duplicate.mergeInto}
                     </button>
                   </div>
                 </div>
@@ -53,12 +51,12 @@ export default function DuplicateDialog() {
             </div>
           </>
         ) : (
-          <p className="modal-sub">Rien en double ici, mais cette valeur apparaît ailleurs :</p>
+          <p className="modal-sub">{d.duplicate.subElsewhere}</p>
         )}
 
         {otherBoards.length > 0 && (
           <div className="dup-cross">
-            <div className="dup-cross-title">Aussi vu dans :</div>
+            <div className="dup-cross-title">{d.duplicate.alsoSeen}</div>
             {otherBoards.map((h) => (
               <button
                 key={h.id}
@@ -76,7 +74,7 @@ export default function DuplicateDialog() {
 
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={dismiss}>
-            Garder séparé
+            {d.duplicate.keepBoth}
           </button>
         </div>
       </div>

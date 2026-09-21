@@ -7,9 +7,13 @@ import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
 import SearchPalette from './components/SearchPalette';
 import Toolbar from './components/Toolbar';
+import { useDict } from './i18n';
+import { dict } from './i18n/current';
 import { useStore } from './store';
+import LanguagePicker from './components/LanguagePicker';
 
 export default function App() {
+  const d = useDict();
   const init = useStore((s) => s.init);
   const board = useStore((s) => s.board);
   const toast = useStore((s) => s.toast);
@@ -35,7 +39,7 @@ export default function App() {
         setSearching(true);
       } else if (mod && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        void makeSnapshot('point manuel');
+        void makeSnapshot(dict().history.manualPoint);
       } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'z' && !typing) {
         e.preventDefault();
         undo();
@@ -76,14 +80,14 @@ export default function App() {
           ) : (
             <div className="welcome">
               <div className="welcome-card">
-                <h1>🕸️ Plan de travail OSINT</h1>
-                <p>
-                  Chaque enquête est un plan infini : tu poses des éléments, tu les relies, tu racontes comment tu
-                  es passé de l’un à l’autre. Tout est enregistré en local, automatiquement.
-                </p>
+                <h1>🕸️ {d.welcome.title}</h1>
+                <p>{d.welcome.text}</p>
                 <button className="btn btn-primary" onClick={() => void newBoard()}>
-                  Créer ma première enquête
+                  {d.welcome.cta}
                 </button>
+                <div className="welcome-lang">
+                  <LanguagePicker />
+                </div>
               </div>
             </div>
           )}

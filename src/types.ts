@@ -102,6 +102,8 @@ export type Tool = {
   url?: string;
   /** Commande a copier (outils en ligne de commande). */
   cmd?: string;
+  /** Qualificatif traduit accole au nom : Google — « expression exacte ». */
+  variant?: string;
   types: (EntityKind | '*')[];
   custom?: boolean;
   hint?: string;

@@ -12,7 +12,8 @@
     "canvas",
     "local-first",
     "react-flow",
-    "sqlite"
+    "sqlite",
+    "i18n"
   ],
   "engines": {
     "node": ">=24"

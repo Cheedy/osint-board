@@ -2,6 +2,8 @@ import { addEdge, applyEdgeChanges, applyNodeChanges } from '@xyflow/react';
 import type { Connection, EdgeChange, NodeChange, Viewport } from '@xyflow/react';
 import { create } from 'zustand';
 import { api } from './lib/api';
+import { applyLang, dict } from './i18n/current';
+import { detectLang, type Lang } from './i18n/langs';
 import { entityDef } from './lib/entityTypes';
 import type {
   Board,
@@ -48,6 +50,7 @@ interface Store {
   lastSavedAt: number | null;
   loading: boolean;
   theme: Theme;
+  lang: Lang;
   toast: string | null;
   duplicate: DuplicateAsk | null;
   past: HistoryEntry[];
@@ -55,6 +58,7 @@ interface Store {
 
   init: () => Promise<void>;
   setTheme: (t: Theme) => void;
+  setLang: (l: Lang) => void;
   notify: (msg: string) => void;
 
   loadBoards: () => Promise<void>;
@@ -144,6 +148,7 @@ export const useStore = create<Store>((set, get) => {
     lastSavedAt: null,
     loading: false,
     theme: (localStorage.getItem('osint-theme') as Theme) || 'dark',
+    lang: detectLang(),
     toast: null,
     duplicate: null,
     past: [],
@@ -151,6 +156,7 @@ export const useStore = create<Store>((set, get) => {
 
     async init() {
       document.documentElement.dataset.theme = get().theme;
+      applyLang(get().lang);
       await Promise.all([get().loadBoards(), get().loadTools()]);
       const last = localStorage.getItem('osint-last-board');
       const boards = get().boards;
@@ -162,6 +168,12 @@ export const useStore = create<Store>((set, get) => {
       localStorage.setItem('osint-theme', t);
       document.documentElement.dataset.theme = t;
       set({ theme: t });
+    },
+
+    setLang(l) {
+      localStorage.setItem('osint-lang', l);
+      applyLang(l);
+      set({ lang: l });
     },
 
     notify(msg) {
@@ -177,7 +189,7 @@ export const useStore = create<Store>((set, get) => {
     },
 
     async newBoard(title) {
-      const state = await api.createBoard(title ?? 'Nouvelle enquête');
+      const state = await api.createBoard(title ?? dict().boards.newDefault);
       await get().loadBoards();
       localStorage.setItem('osint-last-board', state.board.id);
       set({
@@ -227,14 +239,14 @@ export const useStore = create<Store>((set, get) => {
         localStorage.removeItem('osint-last-board');
       }
       await get().loadBoards();
-      get().notify('Enquête supprimée');
+      get().notify(dict().boards.deleted);
     },
 
     async duplicateBoard(id) {
       const state = await api.duplicateBoard(id);
       await get().loadBoards();
       await get().openBoard(state.board.id);
-      get().notify('Enquête dupliquée');
+      get().notify(dict().boards.duplicated);
     },
 
     patchBoard(patch) {
@@ -385,7 +397,7 @@ export const useStore = create<Store>((set, get) => {
         duplicate: null,
       });
       touch();
-      get().notify('Nœuds fusionnés');
+      get().notify(dict().merge.done);
     },
 
     setNodes(nodes) {
@@ -511,7 +523,7 @@ export const useStore = create<Store>((set, get) => {
         void get().loadBoards();
       } catch (e) {
         set({ status: 'error' });
-        get().notify('Sauvegarde impossible — le serveur répond pas');
+        get().notify(dict().store.saveFailed);
       }
     },
 
@@ -527,7 +539,7 @@ export const useStore = create<Store>((set, get) => {
       await get().save();
       await api.createSnapshot(board.id, label);
       await get().loadSnapshots();
-      get().notify('Version enregistrée');
+      get().notify(dict().history.saved);
     },
 
     async restoreSnapshot(id) {
@@ -547,7 +559,7 @@ export const useStore = create<Store>((set, get) => {
           status: 'saved',
         });
         await get().loadSnapshots();
-        get().notify('Version restaurée');
+        get().notify(dict().history.restored);
       } finally {
         set({ loading: false });
       }
@@ -562,7 +574,7 @@ export const useStore = create<Store>((set, get) => {
     async addTool(tool) {
       const created = await api.addTool(tool);
       set({ customTools: [...get().customTools, created] });
-      get().notify('Outil ajouté');
+      get().notify(dict().tools.added);
     },
 
     async deleteTool(id) {
@@ -609,7 +621,7 @@ export const useStore = create<Store>((set, get) => {
 export const getViewport = () => viewport;
 
 export function nodeTitle(node: OsintNode): string {
-  return node.data.label || `${entityDef(node.data.kind).name} sans valeur`;
+  return node.data.label || dict().tools.valuelessNode;
 }
 
 export const CONFIDENCE_ORDER: Confidence[] = ['confirmed', 'probable', 'unverified'];

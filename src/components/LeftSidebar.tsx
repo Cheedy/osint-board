@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useDict } from '../i18n';
 import { useStore } from '../store';
 import { timeAgo, formatTime } from '../lib/format';
+import LanguagePicker from './LanguagePicker';
 
 export default function LeftSidebar() {
+  const d = useDict();
   const boards = useStore((s) => s.boards);
   const board = useStore((s) => s.board);
   const snapshots = useStore((s) => s.snapshots);
@@ -20,23 +23,23 @@ export default function LeftSidebar() {
   return (
     <aside className="side side-left">
       <div className="side-head">
-        <h1>Enquêtes</h1>
-        <button className="btn btn-primary btn-sm" onClick={() => void newBoard()} title="Nouvelle enquête">
-          + Nouvelle
+        <h1>{d.boards.title}</h1>
+        <button className="btn btn-primary btn-sm" onClick={() => void newBoard()} title={d.boards.newTitle}>
+          {d.boards.new}
         </button>
       </div>
 
       {boards.length > 6 && (
         <input
           className="side-filter"
-          placeholder="Filtrer…"
+          placeholder={d.boards.filter}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
       )}
 
       <div className="board-list">
-        {visible.length === 0 && <div className="side-empty">Aucune enquête. Crée la première.</div>}
+        {visible.length === 0 && <div className="side-empty">{d.boards.none}</div>}
         {visible.map((b) => (
           <div
             key={b.id}
@@ -45,10 +48,7 @@ export default function LeftSidebar() {
           >
             <div className="board-item-main">
               <div className="board-title">{b.title}</div>
-              <div className="board-meta">
-                {b.nodeCount} élément{b.nodeCount > 1 ? 's' : ''} · {b.edgeCount} lien
-                {b.edgeCount > 1 ? 's' : ''} · {timeAgo(b.updatedAt)}
-              </div>
+              <div className="board-meta">{d.boards.summary(b.nodeCount, b.edgeCount, timeAgo(b.updatedAt))}</div>
             </div>
             <button
               className="board-more"
@@ -67,16 +67,16 @@ export default function LeftSidebar() {
                     void duplicateBoard(b.id);
                   }}
                 >
-                  Dupliquer
+                  {d.boards.duplicate}
                 </button>
                 <button
                   className="danger"
                   onClick={() => {
                     setMenuFor(null);
-                    if (confirm(`Supprimer « ${b.title} » et tout son contenu ?`)) void removeBoard(b.id);
+                    if (confirm(d.boards.confirmDelete(b.title))) void removeBoard(b.id);
                   }}
                 >
-                  Supprimer
+                  {d.common.delete}
                 </button>
               </div>
             )}
@@ -87,37 +87,38 @@ export default function LeftSidebar() {
       {board && (
         <div className="history">
           <div className="side-head side-head-sub">
-            <h2>Historique</h2>
+            <h2>{d.history.title}</h2>
             <button
               className="btn btn-ghost btn-sm"
-              title="Figer une version maintenant (Ctrl+S)"
-              onClick={() => void makeSnapshot('point manuel')}
+              title={d.history.addTitle}
+              onClick={() => void makeSnapshot(d.history.manualPoint)}
             >
-              + Version
+              {d.history.add}
             </button>
           </div>
           <div className="history-list">
-            {snapshots.length === 0 && <div className="side-empty">Pas encore de version.</div>}
+            {snapshots.length === 0 && <div className="side-empty">{d.history.none}</div>}
             {snapshots.map((s, i) => (
               <button
                 key={s.id}
                 className="history-item"
-                title="Restaurer cette version"
+                title={d.history.restoreTitle}
                 onClick={() => {
-                  if (confirm(`Revenir à la version de ${formatTime(s.createdAt)} ?\n\nL’état actuel sera gardé comme version avant de basculer.`))
-                    void restoreSnapshot(s.id);
+                  if (confirm(d.history.confirmRestore(formatTime(s.createdAt)))) void restoreSnapshot(s.id);
                 }}
               >
                 <span className="history-time">{formatTime(s.createdAt)}</span>
-                <span className="history-meta">
-                  {s.nodeCount} él. · {s.edgeCount} liens {s.label ? `· ${s.label}` : ''}
-                </span>
-                {i === 0 && <span className="history-tag">le plus récent</span>}
+                <span className="history-meta">{d.history.meta(s.nodeCount, s.edgeCount, s.label)}</span>
+                {i === 0 && <span className="history-tag">{d.history.latest}</span>}
               </button>
             ))}
           </div>
         </div>
       )}
+
+      <div className="side-foot">
+        <LanguagePicker />
+      </div>
     </aside>
   );
 }
