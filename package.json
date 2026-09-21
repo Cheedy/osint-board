@@ -1,0 +1,45 @@
+{
+  "name": "osint-canvas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plan de travail local pour enquetes OSINT : cartographier les trouvailles, les relier, et garder la trace de comment on y est arrive.",
+  "license": "MIT",
+  "keywords": [
+    "osint",
+    "investigation",
+    "link-analysis",
+    "graph",
+    "canvas",
+    "local-first",
+    "react-flow",
+    "sqlite"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "concurrently -n api,web -c cyan,magenta \"npm run server\" \"vite --open\"",
+    "dev": "npm start",
+    "server": "node --disable-warning=ExperimentalWarning server/index.js",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^1.1.4",
+    "@xyflow/react": "^12.3.5",
+    "express": "^4.21.2",
+    "html-to-image": "^1.11.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  }
+}
